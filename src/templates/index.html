@@ -1,298 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeaseLens</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f0f4f8;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-        }
-        .container { width: 100%; max-width: 720px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { font-size: 2.5rem; color: #1a202c; letter-spacing: -1px; }
-        .header h1 span { color: #4f46e5; }
-        .header p { color: #64748b; margin-top: 8px; font-size: 1.1rem; }
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-        }
-        .upload-area {
-            border: 2px dashed #c7d2fe;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            background: #f8f7ff;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .upload-area:hover { border-color: #4f46e5; background: #f0effe; }
-        .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
-        .upload-area p { color: #64748b; margin-bottom: 16px; }
-        .upload-area input { display: none; }
-        .file-label {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #475569;
-            font-size: 0.9rem;
-            margin-bottom: 16px;
-        }
-        .file-label:hover { background: #e2e8f0; }
-        .btn {
-            display: inline-block;
-            padding: 12px 28px;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .btn:hover { background: #4338ca; }
-        .btn:disabled { background: #a5b4fc; cursor: not-allowed; }
-        .status { margin-top: 16px; font-size: 0.95rem; }
-        .status.success { color: #059669; font-weight: 600; }
-        .status.error { color: #dc2626; }
-        #qa-section { display: none; }
-        .qa-card h2 { font-size: 1.2rem; color: #1a202c; margin-bottom: 16px; }
-        .input-row { display: flex; gap: 10px; }
-        .input-row input {
-            flex: 1;
-            padding: 12px 16px;
-            font-size: 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-row input:focus { border-color: #4f46e5; }
-        .thinking {
-            margin-top: 20px;
-            color: #64748b;
-            font-style: italic;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .dot { animation: blink 1.4s infinite; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
-        .history { margin-top: 24px; }
-        .history-item { margin-bottom: 20px; }
-        .history-item .q { font-weight: 600; color: #4f46e5; margin-bottom: 6px; }
-        .history-item .a {
-            padding: 14px 18px;
-            background: #f8f7ff;
-            border-left: 3px solid #c7d2fe;
-            border-radius: 0 8px 8px 0;
-            color: #374151;
-            line-height: 1.6;
-            font-size: 0.95rem;
-        }
-        .divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
-        .filename-tag {
-            display: inline-block;
-            background: #ede9fe;
-            color: #6d28d9;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-top: 12px;
-        }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .summary-item {
-            background: #f8f7ff;
-            border-radius: 10px;
-            padding: 16px;
-            border: 1px solid #e0e7ff;
-        }
-        .summary-item .label {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #6d28d9;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        .summary-item .value {
-            font-size: 1rem;
-            color: #1a202c;
-            font-weight: 500;
-        }
-        .summary-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 4px;
-        }
-        .summary-subtitle {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeaseLens</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+.container { width: 100%; max-width: 720px; }
+.header { text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 2.5rem; color: #1a202c; letter-spacing: -1px; }
+.header h1 span { color: #4f46e5; }
+.header p { color: #64748b; margin-top: 8px; font-size: 1.1rem; }
+.card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.05); margin-bottom: 24px; }
+.upload-area { border: 2px dashed #c7d2fe; border-radius: 12px; padding: 40px; text-align: center; background: #f8f7ff; cursor: pointer; transition: all 0.2s; }
+.upload-area:hover { border-color: #4f46e5; background: #f0effe; }
+.upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.upload-area p { color: #64748b; margin-bottom: 16px; }
+.upload-area input { display: none; }
+.file-label { display: inline-block; padding: 10px 20px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.9rem; margin-bottom: 16px; max-width: 100%; overflow-wrap: anywhere; }
+.file-label:hover { background: #e2e8f0; }
+.btn { display: inline-block; padding: 12px 28px; background: #4f46e5; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background 0.2s; }
+.btn:hover { background: #4338ca; }
+.btn:disabled { background: #a5b4fc; cursor: not-allowed; }
+.status { margin-top: 16px; font-size: 0.95rem; }
+.status.success { color: #059669; font-weight: 600; }
+.status.error { color: #dc2626; }
+#qa-section { display: none; }
+.qa-card h2 { font-size: 1.2rem; color: #1a202c; margin-bottom: 16px; }
+.input-row { display: flex; gap: 10px; }
+.input-row input { flex: 1; min-width: 0; padding: 12px 16px; font-size: 1rem; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; transition: border-color 0.2s; }
+.input-row input:focus { border-color: #4f46e5; }
+.thinking { margin-top: 20px; color: #64748b; font-style: italic; }
+.dot { animation: blink 1.4s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0; } 40% { opacity: 1; } }
+.error-msg { color: #dc2626; margin-top: 16px; }
+.history { margin-top: 24px; }
+.history-item { margin-bottom: 20px; }
+.history-item .q { font-weight: 600; color: #4f46e5; margin-bottom: 6px; }
+.history-item .a { padding: 14px 18px; background: #f8f7ff; border-left: 3px solid #c7d2fe; border-radius: 0 8px 8px 0; color: #374151; line-height: 1.6; font-size: 0.95rem; overflow-x: auto; }
+.history-item .a p { margin-bottom: 8px; }
+.history-item .a p:last-child { margin-bottom: 0; }
+.history-item .a ul, .history-item .a ol { margin: 6px 0 6px 20px; }
+.history-item .a table { border-collapse: collapse; margin: 8px 0; }
+.history-item .a th, .history-item .a td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
+.divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+.filename-tag { display: inline-block; background: #ede9fe; color: #6d28d9; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; margin-top: 12px; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.summary-item { background: #f8f7ff; border-radius: 10px; padding: 16px; border: 1px solid #e0e7ff; }
+.summary-item .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6d28d9; font-weight: 600; margin-bottom: 6px; }
+.summary-item .value { font-size: 1rem; color: #1a202c; font-weight: 500; }
+.summary-title { font-size: 1.1rem; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+.summary-subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
+@media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } .card { padding: 20px; } }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Lease<span>Lens</span></h1>
-            <p>Ask anything about your lease in plain English</p>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1>Lease<span>Lens</span></h1>
+        <p>Ask anything about your lease in plain English</p>
+    </div>
 
-        <div class="card">
-            <div class="upload-area" onclick="document.getElementById('lease-file').click()">
-                <div class="upload-icon">📄</div>
-                <p>Click to select your lease file</p>
-                <label class="file-label" onclick="event.stopPropagation()">
-                    <input type="file" id="lease-file" accept=".pdf,.md">
-                    Choose file (.pdf or .md)
-                </label>
-                <br>
-                <button class="btn" id="upload-btn" onclick="event.stopPropagation(); uploadLease()">Upload Lease</button>
-                <div id="upload-status" class="status"></div>
-            </div>
-        </div>
-
-        <div class="card" id="summary-section" style="display:none">
-            <div class="summary-title">📋 Lease Summary</div>
-            <div class="summary-subtitle">Key facts extracted automatically</div>
-            <div class="summary-grid" id="summary-grid"></div>
-        </div>
-
-        <div class="card qa-card" id="qa-section">
-            <h2>Ask a question</h2>
-            <div class="input-row">
-                <input type="text" id="question" placeholder="e.g. Can I have a pet? What is the late fee?">
-                <button class="btn" id="ask-btn" onclick="askQuestion()">Ask</button>
-            </div>
-            <div id="answer"></div>
-            <div id="history" class="history"></div>
+    <div class="card">
+        <div class="upload-area" onclick="document.getElementById('lease-file').click()">
+            <div class="upload-icon">📄</div>
+            <p>Click to select your lease file</p>
+            <label class="file-label" onclick="event.stopPropagation()">
+                <input type="file" id="lease-file" accept=".pdf,.md">
+                <span id="file-name">Choose file (.pdf or .md)</span>
+            </label>
+            <br>
+            <button class="btn" id="upload-btn" onclick="event.stopPropagation(); uploadLease()">Upload Lease</button>
+            <div id="upload-status" class="status"></div>
         </div>
     </div>
 
-    <script>
-        var currentFile = null;
-        var historyItems = [];
+    <div class="card" id="summary-section" style="display:none">
+        <div class="summary-title">📋 Lease Summary</div>
+        <div class="summary-subtitle">Key facts extracted automatically</div>
+        <div class="summary-grid" id="summary-grid"></div>
+    </div>
 
-        function uploadLease() {
-            var fileInput = document.getElementById('lease-file');
-            if (!fileInput.files[0]) { alert('Please select a file first.'); return; }
-            currentFile = fileInput.files[0].name;
-            var formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            var status = document.getElementById('upload-status');
-            status.className = 'status';
-            status.textContent = 'Uploading...';
-            var btn = document.getElementById('upload-btn');
-            btn.disabled = true;
-            fetch('/upload', { method: 'POST', body: formData })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    btn.disabled = false;
-                    if (data.error) {
-                        status.className = 'status error';
-                        status.textContent = data.error;
-                    } else {
-                        status.className = 'status success';
-                        status.innerHTML = 'Loaded ' + data.pages + ' pages <span class="filename-tag">' + data.filename + '</span>';
-                        document.getElementById('qa-section').style.display = 'block';
-                        loadSummary();
-                    }
-                });
-        }
+    <div class="card qa-card" id="qa-section">
+        <h2>Ask a question</h2>
+        <div class="input-row">
+            <input type="text" id="question" placeholder="e.g. Can I have a pet? What is the late fee?">
+            <button class="btn" id="ask-btn" onclick="askQuestion()">Ask</button>
+        </div>
+        <div id="answer"></div>
+        <div id="history" class="history"></div>
+    </div>
+</div>
 
-        function loadSummary() {
-            document.getElementById('summary-section').style.display = 'block';
-            document.getElementById('summary-grid').innerHTML = '<p style="color:#64748b;font-style:italic">Extracting key facts...</p>';
-            fetch('/summarize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: currentFile })
-            })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.error) {
-                        document.getElementById('summary-grid').innerHTML = '<p style="color:#dc2626">' + data.error + '</p>';
-                        return;
-                    }
-                    var facts = data.facts;
-                    var labels = {
-                        rent: 'Monthly Rent',
-                        deposit: 'Security Deposit',
-                        start_date: 'Lease Start',
-                        end_date: 'Lease End',
-                        late_fee: 'Late Fee',
-                        notice: 'Move-out Notice'
-                    };
-                    var html = '';
-                    Object.keys(labels).forEach(function(key) {
-                        html += '<div class="summary-item"><div class="label">' + labels[key] + '</div><div class="value">' + (facts[key] || 'Not specified') + '</div></div>';
-                    });
-                    document.getElementById('summary-grid').innerHTML = html;
-                    document.getElementById('summary-section').scrollIntoView({ behavior: 'smooth' });
-                });
-        }
+<script>
+var currentFile = null;
+var historyItems = [];
 
-        function askQuestion() {
-            var question = document.getElementById('question').value.trim();
-            if (!question) return;
-            document.getElementById('answer').innerHTML = '<div class="thinking">Thinking <span class="dot">•</span><span class="dot">•</span><span class="dot">•</span></div>';
-            document.getElementById('ask-btn').disabled = true;
-            fetch('/ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question, filename: currentFile })
-            })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    document.getElementById('ask-btn').disabled = false;
-                    document.getElementById('answer').innerHTML = '';
-                    if (data.error) {
-                        document.getElementById('answer').innerHTML = '<div style="color:#dc2626;margin-top:16px">' + data.error + '</div>';
-                    } else {
-                        historyItems.unshift({ q: question, a: data.answer });
-                        document.getElementById('question').value = '';
-                        renderHistory();
-                    }
-                });
-        }
+function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+}
 
-        function renderHistory() {
+function renderMarkdown(text) {
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+        return esc(text).replace(/\n/g, '<br>');
+    }
+    return DOMPurify.sanitize(marked.parse(text));
+}
+
+function postJSON(url, body) {
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(res) { return res.json(); });
+}
+
+function uploadLease() {
+    var fileInput = document.getElementById('lease-file');
+    if (!fileInput.files[0]) { alert('Please select a file first.'); return; }
+    var formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    var status = document.getElementById('upload-status');
+    var btn = document.getElementById('upload-btn');
+    status.className = 'status';
+    status.textContent = 'Uploading...';
+    btn.disabled = true;
+    fetch('/upload', { method: 'POST', body: formData })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.error) {
+                status.className = 'status error';
+                status.textContent = data.error;
+                return;
+            }
+            currentFile = data.filename;
+            historyItems = [];
+            renderHistory();
+            document.getElementById('answer').innerHTML = '';
+            status.className = 'status success';
+            status.innerHTML = 'Loaded ' + esc(data.pages) + ' pages <span class="filename-tag">' + esc(data.filename) + '</span>';
+            document.getElementById('qa-section').style.display = 'block';
+            loadSummary();
+        })
+        .catch(function() {
+            status.className = 'status error';
+            status.textContent = 'Upload failed. Is the server running?';
+        })
+        .finally(function() { btn.disabled = false; });
+}
+
+function loadSummary() {
+    var grid = document.getElementById('summary-grid');
+    document.getElementById('summary-section').style.display = 'block';
+    grid.innerHTML = '<p style="color:#64748b;font-style:italic">Extracting key facts...</p>';
+    postJSON('/summarize', { filename: currentFile })
+        .then(function(data) {
+            if (data.error) {
+                grid.innerHTML = '<p class="error-msg">' + esc(data.error) + '</p>';
+                return;
+            }
+            var facts = data.facts;
+            var labels = {
+                rent: 'Monthly Rent', deposit: 'Security Deposit', start_date: 'Lease Start',
+                end_date: 'Lease End', late_fee: 'Late Fee', notice: 'Move-out Notice'
+            };
             var html = '';
-            historyItems.forEach(function(item) {
-                html += '<div class="history-item"><div class="q">Q: ' + item.q + '</div><div class="a">' + item.a.replace(/\n/g, '<br>') + '</div></div><hr class="divider">';
+            Object.keys(labels).forEach(function(key) {
+                html += '<div class="summary-item"><div class="label">' + labels[key] +
+                        '</div><div class="value">' + esc(facts[key] || 'Not specified') + '</div></div>';
             });
-            document.getElementById('history').innerHTML = html;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('question').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') askQuestion();
-            });
+            grid.innerHTML = html;
+        })
+        .catch(function() {
+            grid.innerHTML = '<p class="error-msg">Could not load summary.</p>';
         });
-    </script>
+}
+
+function askQuestion() {
+    var input = document.getElementById('question');
+    var question = input.value.trim();
+    if (!question) return;
+    var answerBox = document.getElementById('answer');
+    var btn = document.getElementById('ask-btn');
+    answerBox.innerHTML = '<div class="thinking">Thinking <span class="dot">•</span><span class="dot">•</span><span class="dot">•</span></div>';
+    btn.disabled = true;
+    postJSON('/ask', { question: question, filename: currentFile })
+        .then(function(data) {
+            answerBox.innerHTML = '';
+            if (data.error) {
+                answerBox.innerHTML = '<div class="error-msg">' + esc(data.error) + '</div>';
+                return;
+            }
+            historyItems.unshift({ q: question, a: data.answer });
+            input.value = '';
+            renderHistory();
+        })
+        .catch(function() {
+            answerBox.innerHTML = '<div class="error-msg">Could not reach the server.</div>';
+        })
+        .finally(function() { btn.disabled = false; });
+}
+
+function renderHistory() {
+    var html = '';
+    historyItems.forEach(function(item) {
+        html += '<div class="history-item"><div class="q">Q: ' + esc(item.q) + '</div><div class="a">' +
+                renderMarkdown(item.a) + '</div></div><hr class="divider">';
+    });
+    document.getElementById('history').innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('question').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') askQuestion();
+    });
+    document.getElementById('lease-file').addEventListener('change', function() {
+        if (this.files[0]) document.getElementById('file-name').textContent = this.files[0].name;
+    });
+});
+</script>
 </body>
 </html>
