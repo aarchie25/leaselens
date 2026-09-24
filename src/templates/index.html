@@ -87,6 +87,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .qa-card .dl-row h2 { margin: 0; }
 .dl-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.9rem; color: #475569; font-weight: 600; }
 .dl-btn:hover { background: #e2e8f0; }
+.date-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+.date-row .dl { color: #64748b; font-size: 0.95rem; }
+.date-row .dv { font-weight: 600; color: #1a202c; text-align: right; }
+.date-row .dv.late { color: #dc2626; }
+.date-row input { width: 90px; padding: 6px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; text-align: right; outline: none; }
+.date-row input:focus { border-color: #4f46e5; }
+.dnote { font-size: 0.85rem; color: #64748b; margin-top: 12px; line-height: 1.5; }
 @media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } .card { padding: 20px; } }
 </style>
 </head>
@@ -115,6 +122,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="summary-title">📋 Lease Summary</div>
         <div class="summary-subtitle">Key facts extracted automatically</div>
         <div class="summary-grid" id="summary-grid"></div>
+    </div>
+
+    <div class="card" id="dates-section" style="display:none">
+        <div class="summary-title">📅 Key Dates</div>
+        <div class="summary-subtitle">Worked out from your lease summary</div>
+        <div id="dates-body"></div>
     </div>
 
     <div class="card" id="risk-section" style="display:none">
@@ -193,6 +206,7 @@ function uploadLease() {
                 return;
             }
             currentFile = data.filename;
+            resetDates();
             lastFacts = null;
             lastFlags = null;
             historyItems = [];
@@ -232,6 +246,7 @@ function loadSummary() {
                         '</div><div class="value">' + esc(facts[key] || 'Not specified') + '</div></div>';
             });
             grid.innerHTML = html;
+            renderDates(facts);
         })
         .catch(function() {
             grid.innerHTML = '<p class="error-msg">Could not load summary.</p>';
@@ -435,6 +450,126 @@ function buildReport() {
 function downloadReport() {
     var name = (currentFile || 'lease').replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_') + '-report.txt';
     var blob = new Blob([buildReport()], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+}
+
+var MONTH_IDX = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+var endDate = null;
+var noticeDays = null;
+
+function makeDate(y, m, d) {
+    var dt = new Date(y, m, d);
+    return (dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d) ? dt : null;
+}
+
+function parseDate(text) {
+    var t = String(text || ''), m;
+    var mon = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+    m = t.match(new RegExp('\\b' + mon + '\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})', 'i'));
+    if (m) return makeDate(+m[3], MONTH_IDX[m[1].toLowerCase()], +m[2]);
+    m = t.match(new RegExp('\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+' + mon + ',?\\s+(\\d{4})', 'i'));
+    if (m) return makeDate(+m[3], MONTH_IDX[m[2].toLowerCase()], +m[1]);
+    m = t.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+    if (m) return makeDate(+m[3], +m[1] - 1, +m[2]);
+    m = t.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+    if (m) return makeDate(+m[1], +m[2] - 1, +m[3]);
+    return null;
+}
+
+function parseNoticeDays(text) {
+    var m = String(text || '').match(/(\d{1,3})\)?[-\s]*(?:calendar\s+)?days?\b/i);
+    return m ? parseInt(m[1], 10) : null;
+}
+
+function fmt(d) { return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }); }
+function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+function today0() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+
+function resetDates() {
+    endDate = null;
+    noticeDays = null;
+    document.getElementById('dates-section').style.display = 'none';
+}
+
+function renderDates(facts) {
+    var sec = document.getElementById('dates-section');
+    endDate = parseDate(facts.end_date);
+    if (!endDate) { sec.style.display = 'none'; return; }
+    noticeDays = parseNoticeDays(facts.notice);
+    document.getElementById('dates-body').innerHTML =
+        '<div class="date-row"><span class="dl">Lease ends</span><span class="dv" id="d-end"></span></div>' +
+        '<div class="date-row"><span class="dl">Notice needed (days)</span><input type="number" id="notice-days" min="1" max="365"></div>' +
+        '<div class="date-row"><span class="dl">Give notice by</span><span class="dv" id="d-deadline"></span></div>' +
+        '<div class="date-row"><span class="dl">Time left</span><span class="dv" id="d-left"></span></div>' +
+        '<div class="dnote" id="d-note"></div>' +
+        '<button class="btn" style="margin-top:14px" onclick="downloadCalendar()">Add to calendar (.ics)</button>';
+    var input = document.getElementById('notice-days');
+    input.value = noticeDays === null ? '' : noticeDays;
+    input.addEventListener('input', function() {
+        var v = parseInt(this.value, 10);
+        noticeDays = (v > 0 && v <= 365) ? v : null;
+        updateDates();
+    });
+    document.getElementById('d-end').textContent = fmt(endDate);
+    document.getElementById('d-note').textContent =
+        'The summary says: "' + (facts.notice || 'Not specified') + '". The number above is the first one found, so change it if that is the wrong period. ' +
+        'The date counts back from the lease end. Your lease may count differently, for example notice must be received by a set day of the month.';
+    sec.style.display = 'block';
+    updateDates();
+}
+
+function updateDates() {
+    var dl = document.getElementById('d-deadline');
+    var left = document.getElementById('d-left');
+    if (!noticeDays) {
+        dl.textContent = 'Enter the notice days above';
+        left.textContent = 'n/a';
+        left.className = 'dv';
+        return;
+    }
+    var deadline = addDays(endDate, -noticeDays);
+    dl.textContent = fmt(deadline);
+    var n = Math.round((deadline - today0()) / 86400000);
+    if (n > 0) { left.textContent = n + ' days'; left.className = 'dv'; }
+    else if (n === 0) { left.textContent = 'Today'; left.className = 'dv late'; }
+    else { left.textContent = 'Passed ' + (-n) + ' days ago'; left.className = 'dv late'; }
+}
+
+function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+function icsDate(d) { return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
+
+function icsEvent(uid, day, title, desc, alarms) {
+    var stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    var L = ['BEGIN:VEVENT', 'UID:' + uid + '@leaselens.local', 'DTSTAMP:' + stamp,
+             'DTSTART;VALUE=DATE:' + icsDate(day), 'DTEND;VALUE=DATE:' + icsDate(addDays(day, 1)),
+             'SUMMARY:' + icsEsc(title), 'DESCRIPTION:' + icsEsc(desc)];
+    alarms.forEach(function(days) {
+        L.push('BEGIN:VALARM', 'TRIGGER:-P' + days + 'D', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(title), 'END:VALARM');
+    });
+    L.push('END:VEVENT');
+    return L;
+}
+
+function downloadCalendar() {
+    if (!endDate) return;
+    var id = Date.now();
+    var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LeaseLens//EN', 'CALSCALE:GREGORIAN'];
+    if (noticeDays) {
+        lines = lines.concat(icsEvent('notice-' + id, addDays(endDate, -noticeDays),
+            'Last day to give move-out notice',
+            'Computed as lease end minus ' + noticeDays + ' days. Confirm the exact rule in your lease.', [14, 3]));
+    }
+    lines = lines.concat(icsEvent('end-' + id, endDate, 'Lease ends', 'Lease end date from your lease summary.', [7]));
+    lines.push('END:VCALENDAR');
+    var name = (currentFile || 'lease').replace(/\.[^.]+$/, '').replace(/[^\w-]+/g, '_') + '-dates.ics';
+    var blob = new Blob([lines.join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
