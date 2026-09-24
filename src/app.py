@@ -289,6 +289,22 @@ LEASE EXCERPTS:
     return jsonify({"error": "Could not scan for risky clauses. Check the server terminal."})
 
 
+@app.route("/page", methods=["POST"])
+def page():
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename") or ""
+    if filename not in pages_cache:
+        return jsonify({"error": "Please upload your lease first."})
+    pages = pages_cache[filename]
+    try:
+        n = int(data.get("n"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid page number."})
+    if n < 1 or n > len(pages):
+        return jsonify({"error": f"This file has {len(pages)} pages."})
+    return jsonify({"page": n, "total": len(pages), "text": pages[n - 1]})
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=5000)
