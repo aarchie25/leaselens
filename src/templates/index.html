@@ -32,13 +32,9 @@
     </div>
     <script>
         var currentFile = null;
-
         document.getElementById('upload-btn').addEventListener('click', function() {
             var fileInput = document.getElementById('lease-file');
-            if (!fileInput.files[0]) {
-                alert('Please select a file first.');
-                return;
-            }
+            if (!fileInput.files[0]) { alert('Please select a file first.'); return; }
             currentFile = fileInput.files[0].name;
             var formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -54,7 +50,6 @@
                     }
                 });
         });
-
         document.getElementById('ask-btn').addEventListener('click', function() {
             var question = document.getElementById('question').value.trim();
             if (!question) return;
@@ -73,7 +68,6 @@
                     }
                 });
         });
-
         document.getElementById('question').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') document.getElementById('ask-btn').click();
         });

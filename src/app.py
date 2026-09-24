@@ -15,15 +15,19 @@ pages_cache = {}
 SYNONYMS = {
     "end": ["end", "expir", "terminat", "last", "final", "december"],
     "start": ["start", "begin", "commenc"],
-    "pet": ["pet", "animal", "dog", "cat"],
-    "rent": ["rent", "payment", "monthly"],
-    "deposit": ["deposit", "security"],
-    "leave": ["leave", "terminat", "vacate", "early"],
-    "late": ["late", "overdue"],
-    "quiet": ["quiet", "noise"],
-    "sublet": ["sublet", "assign", "airbnb"],
+    "pet": ["pet", "animal", "animals", "dog", "cat", "reptile", "bird", "mammal"],
+    "rent": ["rent", "payment", "monthly", "charge"],
+    "deposit": ["deposit", "security", "refundable"],
+    "leave": ["leave", "terminat", "vacate", "early", "move out"],
+    "late": ["late", "overdue", "past due"],
+    "quiet": ["quiet", "noise", "hours"],
+    "sublet": ["sublet", "assign", "airbnb", "platform"],
     "notice": ["notice", "notify", "written"],
-    "lease": ["lease", "term", "agreement"],
+    "lease": ["lease", "term", "agreement", "expir"],
+    "fee": ["fee", "charge", "cost", "fine"],
+    "smoke": ["smoke", "smoking", "tobacco"],
+    "parking": ["parking", "garage", "vehicle"],
+    "pool": ["pool", "spa", "swimming"],
 }
 
 ALWAYS_INCLUDE = [0, 1, 2]
@@ -37,7 +41,7 @@ def expand_query(question):
                 expanded.update(synonyms)
     return expanded
 
-def find_relevant_pages(question, pages, n=3):
+def find_relevant_pages(question, pages, n=5):
     words = expand_query(question)
     scores = []
     for i, page in enumerate(pages):
