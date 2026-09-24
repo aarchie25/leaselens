@@ -1,6 +1,6 @@
 from pathlib import Path
 import re
-import fitz  # pymupdf
+import pymupdf as fitz
 
 def load_pages_from_md(path: Path) -> list[str]:
     text = path.read_text()
