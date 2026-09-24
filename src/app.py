@@ -14,7 +14,7 @@ app = Flask(__name__)
 # CONFIG: if your old app.py created `client` differently (another base_url or
 # API-key variable), copy YOUR old lines over this block. Nothing else changes.
 # ---------------------------------------------------------------------------
-MODEL = "openai/gpt-oss-120b"
+MODEL = os.environ.get("LLM_MODEL", "openai/gpt-oss-120b")
 client = OpenAI(
     base_url=os.environ.get("LLM_BASE_URL", "https://api.groq.com/openai/v1"),
     api_key=os.environ.get("GROQ_API_KEY") or os.environ.get("OPENAI_API_KEY"),
@@ -121,6 +121,19 @@ def index():
     return render_template("index.html")
 
 
+def looks_like_lease(pages):
+    """Free keyword check on the first pages. No AI call, no tokens."""
+    text = " ".join(pages[:6]).lower()
+
+    def has(word):
+        return re.search(r"\b" + word + r"s?\b", text) is not None
+
+    core = any(has(w) for w in ["lease", "tenancy", "rental agreement"])
+    support = sum(has(w) for w in ["tenant", "landlord", "lessor", "lessee", "resident",
+                                   "premises", "rent", "security deposit", "apartment", "management"])
+    return core and support >= 2
+
+
 @app.route("/upload", methods=["POST"])
 def upload():
     f = request.files.get("file")
@@ -137,7 +150,9 @@ def upload():
         return jsonify({"error": "No text found. Scanned PDFs are not supported yet."})
     pages_cache[f.filename] = pages
     summary_cache.pop(f.filename, None)
-    return jsonify({"pages": len(pages), "filename": f.filename})
+    risk_cache.pop(f.filename, None)
+    return jsonify({"pages": len(pages), "filename": f.filename,
+                    "looks_like_lease": looks_like_lease(pages)})
 
 
 @app.route("/ask", methods=["POST"])
@@ -217,6 +232,61 @@ LEASE EXCERPTS:
         except Exception:
             break
     return jsonify({"error": "Could not generate the summary. Check the server terminal."})
+
+
+risk_cache = {}
+RISK_LEVELS = {"high": 0, "medium": 1, "low": 2}
+
+
+@app.route("/risks", methods=["POST"])
+def risks():
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename") or ""
+    if filename not in pages_cache:
+        return jsonify({"error": "Please upload your lease first."})
+    if filename in risk_cache:
+        return jsonify({"flags": risk_cache[filename]})
+
+    pages = pages_cache[filename]
+    query = ("early termination liquidated damages fee penalty late fee default eviction forfeit "
+             "indemnify waive arbitration automatic renewal holdover entry access attorney fees "
+             "charges deductions non-refundable")
+    context = build_context(pages, retrieve(pages, query, k=6), max_chars=24000)
+    prompt = f"""You are reviewing a residential lease for the tenant. Using ONLY the excerpts below, list clauses that could cost the tenant money or limit their rights.
+Look for: early-termination or liquidation fees, high or compounding late fees, automatic renewal or holdover rent, forfeited deposits or non-refundable fees, broad landlord entry rights, waivers of legal rights, arbitration or jury waivers, tenant paying the landlord's attorney fees, and tenant liability for other people's actions.
+Return ONLY a JSON array, no other text, with at most 8 objects, most serious first:
+[{{"severity": "high", "title": "short name", "detail": "1-2 plain-English sentences that include any dollar amounts or day counts", "page": 3}}]
+Rules: severity is "high", "medium" or "low". Only include items actually present in the excerpts. "page" is the number from the [Page N] marker. Never invent amounts. If nothing is risky, return [].
+
+LEASE EXCERPTS:
+{context}"""
+
+    for attempt in range(2):
+        try:
+            text, _ = call_llm(prompt, 4000)
+            start, end = text.find("["), text.rfind("]")
+            raw = json.loads(text[start:end + 1])
+            flags = []
+            for item in raw[:8]:
+                sev = str(item.get("severity", "medium")).lower()
+                if sev not in RISK_LEVELS:
+                    sev = "medium"
+                page = item.get("page")
+                flags.append({
+                    "severity": sev,
+                    "title": str(item.get("title", "Clause")),
+                    "detail": str(item.get("detail", "")),
+                    "page": page if isinstance(page, int) else None,
+                })
+            flags.sort(key=lambda f: RISK_LEVELS[f["severity"]])
+            risk_cache[filename] = flags
+            return jsonify({"flags": flags})
+        except json.JSONDecodeError as e:
+            print("Risk JSON parse failed:", e, flush=True)
+        except Exception as e:
+            print("Risk scan error:", repr(e), flush=True)
+            break
+    return jsonify({"error": "Could not scan for risky clauses. Check the server terminal."})
 
 
 if __name__ == "__main__":
