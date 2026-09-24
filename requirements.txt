@@ -1,3 +1,6 @@
 Flask==3.1.3
 openai==3.19.2
 pypdf==6.19.0
+
+# Optional fallback if pypdf ever fails to import (see load_pages() in app.py).
+# Uncomment to install: pymupdf==1.28.2
